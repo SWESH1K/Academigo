@@ -1,15 +1,6 @@
 # 🎓 Academigo
 
 > An AI-powered learning assistant with chat, quizzes, and Telegram integration.
-
-<div align="center">
-
-![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)
-
-</div>
-
 ## 📋 Table of Contents
 - [Quick Start](#-quick-start)
 - [Features](#-features)
@@ -29,7 +20,7 @@ npm -v             # npm 8+
 
 ### Backend Setup (Django)
 ```powershell
-# 1️⃣ Create and activate virtual environment
+# Create and activate virtual environment
 cd .\
 python -m venv .venv
 .\.venv\Scripts\Activate

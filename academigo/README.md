@@ -1,50 +1,74 @@
-# Vite & HeroUI Template
+# Academigo (Frontend)
+Vite + React + HeroUI (v2) app.
 
-This is a template for creating applications using Vite and HeroUI (v2).
+## Prerequisites
+- Node.js 18+ (or 20 LTS) and npm
+- VS Code (recommended)
+- Optional: pnpm or yarn
 
-[Try it on CodeSandbox](https://githubbox.com/frontio-ai/vite-template)
-
-## Technologies Used
-
-- [Vite](https://vitejs.dev/guide/)
-- [HeroUI](https://heroui.com)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org)
-- [Framer Motion](https://www.framer.com/motion)
-
-## How to Use
-
-To clone the project, run the following command:
-
-```bash
-git clone https://github.com/frontio-ai/vite-template.git
+Verify Node and npm:
+```powershell
+node -v
+npm -v
 ```
 
-### Install dependencies
-
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
-
-```bash
+## Quick Start (Windows, PowerShell)
+1) Install dependencies
+```powershell
+cd c:\Users\varma\OneDrive\Desktop\Academigo\academigo
 npm install
 ```
 
-### Run the development server
-
-```bash
+2) Run the dev server
+```powershell
 npm run dev
 ```
+- App will be available at http://localhost:5173 (or the URL shown in the terminal)
 
-### Setup pnpm (optional)
+3) Build for production
+```powershell
+npm run build
+```
 
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
+4) Preview the production build (optional)
+```powershell
+npm run preview
+```
 
+## Environment variables (optional)
+If the app needs a backend/API, create a .env.local file in this folder:
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+```
+- Access in code via import.meta.env.VITE_API_BASE_URL
+
+## Using pnpm (optional)
+If you use pnpm, add this to .npmrc to hoist HeroUI correctly:
 ```bash
 public-hoist-pattern[]=*@heroui/*
 ```
+Then reinstall:
+```powershell
+pnpm install
+```
 
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+## Troubleshooting
+- Port in use: run dev on another port
+```powershell
+npm run dev -- --port 5174
+```
+- Dependency issues: delete node_modules and lockfile, then reinstall
+```powershell
+rimraf node_modules
+del package-lock.json
+npm install
+```
+- Node version: ensure Node 18+ (or 20 LTS)
+
+## Tech Stack
+- Vite, React, TypeScript
+- HeroUI, Tailwind CSS, Tailwind Variants
+- Framer Motion
 
 ## License
-
-Licensed under the [MIT license](https://github.com/frontio-ai/vite-template/blob/main/LICENSE).
+MIT
