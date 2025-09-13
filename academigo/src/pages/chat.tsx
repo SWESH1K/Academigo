@@ -5,22 +5,76 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { ScrollShadow } from "@heroui/scroll-shadow";
 import { Avatar } from "@heroui/avatar";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/navbar";
 import ReactMarkdown from 'react-markdown';
+import { 
+  saveMessagesToStorage, 
+  loadMessagesFromStorage, 
+  clearMessagesFromStorage,
+  exportMessagesToFile,
+  getChatHistoryMetadata,
+  importMessagesFromFile,
+  forceSaveToStorage,
+  cleanupAutoSave
+} from "@/lib/messageStorage";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  timestamp: string;
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! How can I help you today?" },
-  ]);
-
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load messages from storage on component mount
+  useEffect(() => {
+    const savedMessages = loadMessagesFromStorage();
+    if (savedMessages.length > 0) {
+      setMessages(savedMessages);
+    } else {
+      // Default welcome message if no saved messages
+      const welcomeMessage: Message = {
+        role: "assistant",
+        content: "Hello! How can I help you today?",
+        timestamp: new Date().toISOString()
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, []);
+
+  // Save messages to storage whenever messages change (automatic)
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessagesToStorage(messages);
+    }
+  }, [messages]);
+
+  // Cleanup auto-save when component unmounts
+  useEffect(() => {
+    return () => {
+      cleanupAutoSave();
+    };
+  }, []);
+
+  // Auto-save before page unload to prevent data loss
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (messages.length > 0) {
+        forceSaveToStorage(messages);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -28,12 +82,18 @@ export default function ChatPage() {
     const userMessage = input.trim();
     setInput("");
 
-    // Add user message immediately
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    // Add user message with timestamp
+    const userMessageObj: Message = {
+      role: "user",
+      content: userMessage,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, userMessageObj]);
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/get-response', {  // Changed from get-response to get_response
+      const response = await fetch('http://localhost:8000/api/get-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,22 +107,64 @@ export default function ChatPage() {
 
       const data = await response.json();
 
-      // Add assistant response
-      setMessages(prev => [...prev, {
+      // Add assistant response with timestamp
+      const assistantMessage: Message = {
         role: "assistant",
-        content: data.response || "Sorry, I couldn't generate a response."
-      }]);
+        content: data.response || "Sorry, I couldn't generate a response.",
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
 
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
+      const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I'm having trouble connecting to the server. Please try again later."
-      }]);
+        content: "Sorry, I'm having trouble connecting to the server. Please try again later.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleNewChat = () => {
+    const welcomeMessage: Message = {
+      role: "assistant",
+      content: "Hello! How can I help you today?",
+      timestamp: new Date().toISOString()
+    };
+    setMessages([welcomeMessage]);
+    clearMessagesFromStorage();
+  };
+
+  const handleExportChat = () => {
+    exportMessagesToFile();
+  };
+
+  const handleImportChat = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedMessages = await importMessagesFromFile(file);
+      setMessages(importedMessages);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Failed to import messages:', error);
+      alert('Failed to import chat history. Please check the file format.');
+    }
+  };
+
+  const chatMetadata = getChatHistoryMetadata();
 
   return (
     <div className="h-screen flex flex-col">
@@ -76,14 +178,46 @@ export default function ChatPage() {
             color="primary"
             radius="lg"
             className="mb-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg transition-all duration-300 text-white"
-            onClick={() => {
-              setMessages([{ role: "assistant", content: "Hello! How can I help you today?" }]);
-            }}
+            onClick={handleNewChat}
           >
             ✨ New Chat
           </Button>
+          <div className="flex gap-2 mb-4">
+            <Button
+              color="secondary"
+              radius="lg"
+              size="sm"
+              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg transition-all duration-300 text-white"
+              onClick={handleExportChat}
+            >
+              📥 Export
+            </Button>
+            <Button
+              color="warning"
+              radius="lg"
+              size="sm"
+              className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-lg transition-all duration-300 text-white"
+              onClick={handleImportChat}
+            >
+              📤 Import
+            </Button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleFileImport}
+            style={{ display: 'none' }}
+          />
           <div className="mb-3">
-            <h3 className="text-xs font-semibold text-gray-300 dark:text-gray-400 mb-2">Recent Conversations</h3>
+            <h3 className="text-xs font-semibold text-gray-300 dark:text-gray-400 mb-2">
+              Recent Conversations
+              {chatMetadata.messageCount > 0 && (
+                <span className="ml-2 text-gray-500">
+                  ({chatMetadata.messageCount} messages)
+                </span>
+              )}
+            </h3>
           </div>
           <ScrollShadow className="flex-1 space-y-2">
             <Card className="p-3 text-xs cursor-pointer bg-gray-900/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-700/50 dark:border-gray-600/50 hover:bg-gray-800 dark:hover:bg-gray-700/80 transition-all duration-200 hover:shadow-md">
@@ -124,7 +258,7 @@ export default function ChatPage() {
                 >
                   {msg.role === "assistant" ? (
                     <div className="prose prose-sm prose-invert max-w-none">
-                      <ReactMarkdown 
+                      <ReactMarkdown
                         components={{
                           p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                           code: ({ children }) => <code className="bg-gray-800 px-1 py-0.5 rounded text-xs">{children}</code>,
