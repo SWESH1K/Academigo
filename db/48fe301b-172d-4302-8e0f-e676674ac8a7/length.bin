@@ -1,0 +1,7 @@
+o Example: A customer’s address is the same in billing and shipping systems. 
+4. Validity – Data follows defined formats and rules. 
+o Example: Email ID must contain “@domain.com”. 
+5. Uniqueness – No duplicate records. 
+o Example: A patient record should not appear twice. 
+6. Timeliness – Data is updated and available when needed. 
+o Example: Stock market data updated in real-time.\nn
