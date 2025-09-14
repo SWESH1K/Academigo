@@ -2,6 +2,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from . import langflow as lf
+from .gdrive_rag import get_gdrive_rag_answer
 
 # Create your views here.
 @api_view(['GET', 'POST'])
@@ -10,18 +11,18 @@ def hello_world(request):
         return Response({"message": "Got some data!", "data": request.data})
     return Response({"message": "Hello, world!"})
 
-@api_view(['GET', 'POST'])
-def get_response(request):
-    if request.method == 'POST':
-        # For POST requests with JSON body
-        prompt = request.data.get('prompt', '')
-        if not prompt:
-            return Response({"error": "Prompt is required"}, status=400)
-        try:
-            response = lf.get_response(prompt)['outputs'][0]['outputs'][0]['results']['message']['data']['text']
-        except Exception as e:
-            response = f"Error: {e}"
-        # response = f"Received prompt: {prompt}"
-        return Response({"message": "Response Generated", "response": response})
 
-    return Response({"message": "Response Not Generated"})
+@api_view(['POST'])
+def gdrive_rag_answer(request):
+    """
+    Expects a POST request with JSON body: {"question": "your question here"}
+    Returns: {"answer": "..."}
+    """
+    question = request.data.get('question', '')
+    if not question:
+        return Response({"error": "Question is required"}, status=400)
+    try:
+        answer = get_gdrive_rag_answer(question)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    return Response({"answer": answer})

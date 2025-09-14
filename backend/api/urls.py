@@ -3,5 +3,5 @@ from . import views
 
 urlpatterns = [
     path('', views.hello_world, name="hello"),
-    path('get-response', views.get_response, name="get-response")
+    path('gdrive-rag-answer/', views.gdrive_rag_answer, name="gdrive-rag-answer"),
 ]

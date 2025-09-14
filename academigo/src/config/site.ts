@@ -12,6 +12,10 @@ export const siteConfig = {
       label: "Chat",
       href: "/chat",
     },
+    {
+      label: "Drive Chat",
+      href: "/gdrive-chat",
+    },
   ],
   navMenuItems: [
     {
